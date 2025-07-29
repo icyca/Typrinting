@@ -10,6 +10,19 @@
     <div class="container">
         <h1>🔍 Typing Identity Recognition</h1>
         <p class="subtitle">Type the sentence below and we'll identify you from our database</p>
+        
+        <div class="method-selection">
+            <label for="methodSelect">Identification Method:</label>
+            <select id="methodSelect" class="method-dropdown">
+                <option value="statistical">Statistical (Original)</option>
+                <option value="ngram">N-Gram Analysis</option>
+                <option value="ml">Machine Learning</option>
+            </select>
+            <div class="method-description" id="methodDescription">
+                Uses mean and standard deviation of hold, flight, and down-down times. Best for same text.
+            </div>
+        </div>
+        
         <div class="typing-area">
             <div class="prompt-text" id="prompt"></div>
             <textarea id="input" rows="4" placeholder="Start typing here..." autofocus></textarea>

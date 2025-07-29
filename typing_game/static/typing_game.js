@@ -36,6 +36,51 @@ let timerInterval;
 let currentCharIndex = 0;
 let totalChars = 0;
 
+// N-gram data collection
+let ngramData = {
+    digraphs: {}, // 2-grams: "th", "he", "qu", etc.
+    trigraphs: {} // 3-grams: "the", "qui", "bro", etc.
+};
+let currentKeystrokeSequence = [];
+let lastKeystrokeTime = null;
+
+// N-gram extraction functions
+function extractDigraphs(text) {
+    const digraphs = [];
+    for (let i = 0; i < text.length - 1; i++) {
+        const digraph = text.substring(i, i + 2).toLowerCase();
+        if (digraph.match(/[a-z]{2}/)) { // Only alphabetic digraphs
+            digraphs.push(digraph);
+        }
+    }
+    return digraphs;
+}
+
+function extractTrigraphs(text) {
+    const trigraphs = [];
+    for (let i = 0; i < text.length - 2; i++) {
+        const trigraph = text.substring(i, i + 3).toLowerCase();
+        if (trigraph.match(/[a-z]{3}/)) { // Only alphabetic trigraphs
+            trigraphs.push(trigraph);
+        }
+    }
+    return trigraphs;
+}
+
+function addNgramTiming(ngram, timing) {
+    if (!ngramData.digraphs[ngram]) {
+        ngramData.digraphs[ngram] = [];
+    }
+    ngramData.digraphs[ngram].push(timing);
+}
+
+function addTrigraphTiming(trigraph, timing) {
+    if (!ngramData.trigraphs[trigraph]) {
+        ngramData.trigraphs[trigraph] = [];
+    }
+    ngramData.trigraphs[trigraph].push(timing);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     updateStats();
     document.getElementById('startBtn').onclick = () => {
@@ -78,6 +123,10 @@ document.addEventListener('DOMContentLoaded', function() {
         keyDownTimestamps = {};
         lastKeyUpTime = null;
         lastKeyDownTime = null;
+        // Reset n-gram data
+        ngramData = { digraphs: {}, trigraphs: {} };
+        currentKeystrokeSequence = [];
+        lastKeystrokeTime = null;
         // Start timer
         timerInterval = setInterval(updateTimer, 50);
     }
@@ -117,6 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
             downDownTimes.push(now - lastKeyDownTime);
         }
         lastKeyDownTime = now;
+        
+        // Track keystroke sequence for n-grams
+        currentKeystrokeSequence.push({
+            key: e.key.toLowerCase(),
+            time: now - startTime,
+            type: 'down'
+        });
+        
         timings.push({
             key: e.key,
             code: e.code,
@@ -135,6 +192,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             lastKeyUpTime = now;
         }
+        
+        // Track keystroke sequence for n-grams
+        currentKeystrokeSequence.push({
+            key: e.key.toLowerCase(),
+            time: now - startTime,
+            type: 'up'
+        });
+        
         timings.push({
             key: e.key,
             code: e.code,
@@ -183,12 +248,68 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         currentCharIndex = input.length;
     }
+    function processNgrams() {
+        // Process digraphs (2-grams)
+        const digraphs = extractDigraphs(promptText);
+        for (let i = 0; i < digraphs.length; i++) {
+            const digraph = digraphs[i];
+            // Find timing for this digraph in the keystroke sequence
+            const firstChar = digraph[0];
+            const secondChar = digraph[1];
+            
+            // Find the timing between these two characters
+            let timing = null;
+            for (let j = 0; j < currentKeystrokeSequence.length - 1; j++) {
+                if (currentKeystrokeSequence[j].key === firstChar && 
+                    currentKeystrokeSequence[j+1].key === secondChar &&
+                    currentKeystrokeSequence[j].type === 'down' &&
+                    currentKeystrokeSequence[j+1].type === 'down') {
+                    timing = currentKeystrokeSequence[j+1].time - currentKeystrokeSequence[j].time;
+                    break;
+                }
+            }
+            if (timing !== null) {
+                addNgramTiming(digraph, timing);
+            }
+        }
+        
+        // Process trigraphs (3-grams)
+        const trigraphs = extractTrigraphs(promptText);
+        for (let i = 0; i < trigraphs.length; i++) {
+            const trigraph = trigraphs[i];
+            const firstChar = trigraph[0];
+            const secondChar = trigraph[1];
+            const thirdChar = trigraph[2];
+            
+            // Find the timing for this trigraph
+            let timing = null;
+            for (let j = 0; j < currentKeystrokeSequence.length - 2; j++) {
+                if (currentKeystrokeSequence[j].key === firstChar && 
+                    currentKeystrokeSequence[j+1].key === secondChar &&
+                    currentKeystrokeSequence[j+2].key === thirdChar &&
+                    currentKeystrokeSequence[j].type === 'down' &&
+                    currentKeystrokeSequence[j+1].type === 'down' &&
+                    currentKeystrokeSequence[j+2].type === 'down') {
+                    timing = currentKeystrokeSequence[j+2].time - currentKeystrokeSequence[j].time;
+                    break;
+                }
+            }
+            if (timing !== null) {
+                addTrigraphTiming(trigraph, timing);
+            }
+        }
+    }
+
     function finishGame() {
         isGameActive = false;
         clearInterval(timerInterval);
         const totalTime = (performance.now() - startTime) / 1000;
         const finalWpm = calculateWPM(totalTime);
         const finalAccuracy = calculateAccuracy();
+        
+        // Process n-grams
+        processNgrams();
+        
         // Show results
         document.getElementById('game').style.display = 'none';
         document.getElementById('result').style.display = 'block';
@@ -233,7 +354,9 @@ document.addEventListener('DOMContentLoaded', function() {
             wpm: finalWpm,
             accuracy: finalAccuracy,
             difficulty: currentDifficulty,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            ngram_data: ngramData,
+            keystroke_sequence: currentKeystrokeSequence
         });
     }
     function getPerformanceMessage(wpm, accuracy) {

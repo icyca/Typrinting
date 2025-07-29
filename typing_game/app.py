@@ -22,13 +22,16 @@ def submit():
     username = data.get('username')
     if not username:
         return jsonify({'error': 'No username provided'}), 400
+    
     user_file = os.path.join(DATA_DIR, f'{username}.json')
     if os.path.exists(user_file):
         with open(user_file, 'r') as f:
             user_data = json.load(f)
     else:
         user_data = {'username': username, 'samples': []}
-    user_data['samples'].append({
+    
+    # Store all data types for multi-method identification
+    sample_data = {
         'text': data.get('text'),
         'hold_times': data.get('hold_times'),
         'flight_times': data.get('flight_times'),
@@ -40,10 +43,17 @@ def submit():
         'wpm': data.get('wpm'),
         'accuracy': data.get('accuracy'),
         'difficulty': data.get('difficulty'),
-        'timestamp': data.get('timestamp')
-    })
+        'timestamp': data.get('timestamp'),
+        # New data for enhanced identification methods
+        'ngram_data': data.get('ngram_data', {}),
+        'keystroke_sequence': data.get('keystroke_sequence', [])
+    }
+    
+    user_data['samples'].append(sample_data)
+    
     with open(user_file, 'w') as f:
         json.dump(user_data, f, indent=2)
+    
     return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
