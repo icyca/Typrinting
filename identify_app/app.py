@@ -7,7 +7,7 @@ from scipy.spatial import distance
 
 app = Flask(__name__)
 CORS(app)
-DATA_DIR = '../data'
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
 
 @app.route('/')
 def index():
