@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Typing Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='typing_game.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Advanced Typing Game</h1>
+        <p class="subtitle">Master your typing skills and build your unique typing profile</p>
+        <div id="setup" class="setup-form">
+            <div class="form-group">
+                <label for="username">Enter your name</label>
+                <input type="text" id="username" placeholder="Your name" required />
+            </div>
+            <div class="form-group">
+                <label for="difficultySelect">Select difficulty</label>
+                <select id="difficultySelect">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <button id="startBtn" class="btn">Start Typing Test</button>
+        </div>
+        <div id="game" class="game-container">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-value" id="time">0.00</span>
+                    <span class="stat-label">Time (s)</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="wpm">0</span>
+                    <span class="stat-label">WPM</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="accuracy">100%</span>
+                    <span class="stat-label">Accuracy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="progressText">0%</span>
+                    <span class="stat-label">Progress</span>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+            <div class="prompt-container" id="prompt"></div>
+            <div class="input-container">
+                <textarea id="input" rows="4" placeholder="Start typing here..." autofocus></textarea>
+            </div>
+        </div>
+        <div id="result" class="result-container"></div>
+    </div>
+    <script src="{{ url_for('static', filename='typing_game.js') }}"></script>
+</body>
+</html> 
